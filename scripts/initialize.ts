@@ -85,20 +85,13 @@ async function main() {
   console.log("Program Data Address:", programDataAddress.toString());
 
   try {
-    // Check if already initialized
-    try {
-      const programState = await program.account.programState.fetch(programStatePDA);
-      if (programState.isInitialized) {
-        console.log("\n⚠️  Program is already initialized!");
-        console.log("Program State:", programState);
-        return;
-      }
-    } catch (e) {
-      // Not initialized yet, continue
-      console.log("\n✅ Program not initialized yet, proceeding...");
-    }
-
+    // DON'T check initialization state here - let the on-chain program check authority FIRST
+    // The on-chain program checks in this order:
+    // 1. Upgrade authority (FIRST - most important security check)
+    // 2. Already initialized
+    // 3. Address validation
     console.log("\n📝 Sending initialize transaction...");
+    console.log("⚠️  Note: The program will verify upgrade authority on-chain before initialization");
 
     const tx = await program.methods
       .initialize(ownerAddress, operatorAddress)
@@ -114,55 +107,55 @@ async function main() {
 
     console.log("\n✅ Initialize transaction signature:", tx);
 
-    // Fetch and display the created accounts
-    console.log("\n📊 Fetching initialized accounts...");
+    // // Fetch and display the created accounts
+    // console.log("\n📊 Fetching initialized accounts...");
 
-    const programState = await program.account.programState.fetch(programStatePDA);
-    console.log("\nProgram State:", {
-      isInitialized: programState.isInitialized,
-      bump: programState.bump,
-    });
+    // const programState = await program.account.programState.fetch(programStatePDA);
+    // console.log("\nProgram State:", {
+    //   isInitialized: programState.isInitialized,
+    //   bump: programState.bump,
+    // });
 
-    const ownerRole = await program.account.userRole.fetch(ownerRolePDA);
-    console.log("\nOwner Role:", {
-      user: ownerRole.user.toString(),
-      role: Object.keys(ownerRole.role)[0],
-      roleActiveTime: new Date(ownerRole.roleActiveTime.toNumber() * 1000).toISOString(),
-    });
+    // const ownerRole = await program.account.userRole.fetch(ownerRolePDA);
+    // console.log("\nOwner Role:", {
+    //   user: ownerRole.user.toString(),
+    //   role: Object.keys(ownerRole.role)[0],
+    //   roleActiveTime: new Date(ownerRole.roleActiveTime.toNumber() * 1000).toISOString(),
+    // });
 
-    const operatorRole = await program.account.userRole.fetch(operatorRolePDA);
-    console.log("\nOperator Role:", {
-      user: operatorRole.user.toString(),
-      role: Object.keys(operatorRole.role)[0],
-      roleActiveTime: new Date(operatorRole.roleActiveTime.toNumber() * 1000).toISOString(),
-    });
+    // const operatorRole = await program.account.userRole.fetch(operatorRolePDA);
+    // console.log("\nOperator Role:", {
+    //   user: operatorRole.user.toString(),
+    //   role: Object.keys(operatorRole.role)[0],
+    //   roleActiveTime: new Date(operatorRole.roleActiveTime.toNumber() * 1000).toISOString(),
+    // });
 
-    // Save initialization info to file
-    const initInfo = {
-      programId: program.programId.toString(),
-      programStatePDA: programStatePDA.toString(),
-      owner: {
-        address: ownerAddress.toString(),
-        rolePDA: ownerRolePDA.toString(),
-      },
-      operator: {
-        address: operatorAddress.toString(),
-        rolePDA: operatorRolePDA.toString(),
-      },
-      transactionSignature: tx,
-      timestamp: new Date().toISOString(),
-    };
+    // // Save initialization info to file
+    // const initInfo = {
+    //   programId: program.programId.toString(),
+    //   programStatePDA: programStatePDA.toString(),
+    //   owner: {
+    //     address: ownerAddress.toString(),
+    //     rolePDA: ownerRolePDA.toString(),
+    //   },
+    //   operator: {
+    //     address: operatorAddress.toString(),
+    //     rolePDA: operatorRolePDA.toString(),
+    //   },
+    //   transactionSignature: tx,
+    //   timestamp: new Date().toISOString(),
+    // };
 
-    const initFilePath = path.join(__dirname, "../.init-info.json");
-    fs.writeFileSync(initFilePath, JSON.stringify(initInfo, null, 2));
-    console.log("\n💾 Initialization info saved to .init-info.json");
+    // const initFilePath = path.join(__dirname, "../.init-info.json");
+    // fs.writeFileSync(initFilePath, JSON.stringify(initInfo, null, 2));
+    // console.log("\n💾 Initialization info saved to .init-info.json");
 
-    console.log("\n🎉 Program initialization complete!");
-    console.log("\n📝 Next steps:");
-    console.log("1. Create your SPL Token-2022 mint");
-    console.log("2. Transfer mint authority to program PDA");
-    console.log("3. Use 'make add-role' to add more roles");
-    console.log("4. Use 'make mint' to mint tokens");
+    // console.log("\n🎉 Program initialization complete!");
+    // console.log("\n📝 Next steps:");
+    // console.log("1. Create your SPL Token-2022 mint");
+    // console.log("2. Transfer mint authority to program PDA");
+    // console.log("3. Use 'make add-role' to add more roles");
+    // console.log("4. Use 'make mint' to mint tokens");
 
   } catch (error) {
     console.error("\n❌ Error initializing program:", error);

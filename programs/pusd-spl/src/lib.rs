@@ -36,17 +36,7 @@ pub mod pusd_spl {
     /// The deployer themselves does not receive any role
     /// Can only be called once
     pub fn initialize(ctx: Context<Initialize>, owner_address: Pubkey, operator_address: Pubkey) -> Result<()> {
-        // Check if already initialized
-        let program_state = &mut ctx.accounts.program_state;
-        require!(!program_state.is_initialized, PusdError::AlreadyInitialized);
-        
-        // Validate addresses - matches Solidity InvalidAddress check
-        require!(
-            owner_address != Pubkey::default() && operator_address != Pubkey::default(),
-            PusdError::InvalidAddress
-        );
-        
-        // Verify that the payer is the program upgrade authority
+        // Verify that the payer is the program upgrade authority FIRST
         // Manually deserialize the program data account
         let program_data_account = &ctx.accounts.program_data;
         let data = program_data_account.try_borrow_data()?;
@@ -66,6 +56,16 @@ pub mod pusd_spl {
         require!(
             upgrade_authority == ctx.accounts.payer.key(),
             PusdError::OnlyUpgradeAuthority
+        );
+        
+        // Check if already initialized
+        let program_state = &mut ctx.accounts.program_state;
+        require!(!program_state.is_initialized, PusdError::AlreadyInitialized);
+        
+        // Validate addresses - matches Solidity InvalidAddress check
+        require!(
+            owner_address != Pubkey::default() && operator_address != Pubkey::default(),
+            PusdError::InvalidAddress
         );
         
         msg!("Initializing program with owner: {:?} and operator: {:?}", owner_address, operator_address);
@@ -125,7 +125,7 @@ pub mod pusd_spl {
     /// Matches Solidity: mint(address to, uint256 amount)
     /// Can only be called by users with AuthorizedContract role
     pub fn mint(ctx: Context<MintByContract>, amount: u64) -> Result<()> {
-        // Validate recipient address - matches Solidity RecipientIsZeroAddress check
+        // Validate recipient address 
         require!(
             ctx.accounts.recipient.key() != Pubkey::default(),
             PusdError::RecipientIsZeroAddress
@@ -292,7 +292,7 @@ pub fn get_version() -> String {
 pub struct Initialize<'info> {
     /// Program state account to track initialization
     #[account(
-        init,
+        init_if_needed,
         payer = payer,
         space = ProgramState::LEN,
         seeds = [b"program_state"],
@@ -302,7 +302,7 @@ pub struct Initialize<'info> {
     
     /// The owner role account (DEFAULT_ADMIN_ROLE in Solidity)
     #[account(
-        init,
+        init_if_needed,
         payer = payer,
         space = UserRole::LEN,
         seeds = [b"user_role", owner_address.as_ref()],
@@ -312,7 +312,7 @@ pub struct Initialize<'info> {
     
     /// The operator role account
     #[account(
-        init,
+        init_if_needed,
         payer = payer,
         space = UserRole::LEN,
         seeds = [b"user_role", operator_address.as_ref()],
