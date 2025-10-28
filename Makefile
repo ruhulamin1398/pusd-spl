@@ -46,6 +46,7 @@ create-tokens:; bash scripts/create-token.sh
 initialize:; ts-node scripts/initialize.ts $(OWNER_PUBKEY) $(OPERATOR_PUBKEY)
 generate-pda:; node scripts/generate-pda.js
 mint-tokens:; ts-node scripts/mint-tokens.ts
+mint:; ts-node scripts/mint-tokens.ts $(RECIPIENT) $(AMOUNT)
 
 
 # Role Management 
