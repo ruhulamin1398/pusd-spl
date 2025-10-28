@@ -70,7 +70,7 @@ async function main() {
   console.log("User Role PDA:", userRolePDA.toString());
   console.log("");
   
-  // Verify owner has owner role
+//   Verify owner has owner role
   try {
     const ownerRole = await program.account.userRole.fetch(ownerRolePDA);
     const ownerRoleName = Object.keys(ownerRole.role)[0];
