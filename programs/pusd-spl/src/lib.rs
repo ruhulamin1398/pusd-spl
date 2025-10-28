@@ -3,13 +3,9 @@ use anchor_lang::solana_program::bpf_loader_upgradeable;
 use anchor_spl::token_interface::{
     mint_to, 
     set_authority, 
-    burn as token_burn,  // Rename to avoid conflict with our burn instruction
     MintTo, 
     SetAuthority, 
-    Burn, 
     Token2022, 
-    TokenAccount, 
-    Mint, 
     spl_token_2022::instruction::AuthorityType
 };
 
@@ -17,6 +13,7 @@ use anchor_spl::token_interface::{
 mod state;
 mod errors;
 mod constants;
+mod modifiers;
 
 // Re-export for convenience
 pub use state::*;
@@ -36,37 +33,16 @@ pub mod pusd_spl {
     /// The deployer themselves does not receive any role
     /// Can only be called once
     pub fn initialize(ctx: Context<Initialize>, owner_address: Pubkey, operator_address: Pubkey) -> Result<()> {
-        // Verify that the payer is the program upgrade authority FIRST
-        // Manually deserialize the program data account
-        let program_data_account = &ctx.accounts.program_data;
-        let data = program_data_account.try_borrow_data()?;
+        // Verify upgrade authority FIRST (like Solidity modifier)
+        require_upgrade_authority!(ctx.accounts.program_data, ctx.accounts.payer.key());
         
-        // ProgramData account structure: 45 bytes header + upgrade authority option
-        // First 4 bytes: discriminator (3 for ProgramData)
-        // Next 8 bytes: slot
-        // Next 32 bytes: upgrade authority option (0 = None, 1 = Some followed by Pubkey)
-        require!(data.len() >= 45, PusdError::InvalidProgramData);
-        
-        let upgrade_authority_option = data[4 + 8]; // Skip discriminator and slot
-        require!(upgrade_authority_option == 1, PusdError::OnlyUpgradeAuthority);
-        
-        let upgrade_authority = Pubkey::try_from(&data[4 + 8 + 1..4 + 8 + 1 + 32])
-            .map_err(|_| PusdError::InvalidProgramData)?;
-        
-        require!(
-            upgrade_authority == ctx.accounts.payer.key(),
-            PusdError::OnlyUpgradeAuthority
-        );
-        
-        // Check if already initialized
+        // Check if already initialized (like Solidity modifier)
         let program_state = &mut ctx.accounts.program_state;
-        require!(!program_state.is_initialized, PusdError::AlreadyInitialized);
+        require_not_initialized!(program_state);
         
-        // Validate addresses - matches Solidity InvalidAddress check
-        require!(
-            owner_address != Pubkey::default() && operator_address != Pubkey::default(),
-            PusdError::InvalidAddress
-        );
+        // Validate addresses (like Solidity modifier)
+        require_valid_address!(owner_address);
+        require_valid_address!(operator_address);
         
         msg!("Initializing program with owner: {:?} and operator: {:?}", owner_address, operator_address);
         
@@ -98,8 +74,11 @@ pub mod pusd_spl {
     /// Admin function: Add or update a user's role
     /// Only Owner can call this
     pub fn add_role(ctx: Context<AddRole>, user: Pubkey, role: Role) -> Result<()> {
+        // Check role (like Solidity modifier: onlyRole(ADMIN_ROLE))
+        require_role!(ctx.accounts.owner_role, Role::Owner);
+        
         // Validate address
-        require!(user != Pubkey::default(), PusdError::InvalidAddress);
+        require_valid_address!(user);
         
         msg!("Adding role {:?} to user: {}", role, user);
         
@@ -251,28 +230,6 @@ pub mod pusd_spl {
         mint_to(cpi_ctx, amount)?;
         
         msg!("Successfully minted {} tokens by operator", amount);
-        Ok(())
-    }
-
-    /// Burn tokens from user's account
-    /// Matches Solidity: burn(uint256 amount)
-    /// Can be called by any user to burn their own tokens
-    pub fn burn(ctx: Context<BurnTokens>, amount: u64) -> Result<()> {
-        msg!("Burning {} tokens from {}", amount, ctx.accounts.owner.key());
-        
-        // Burn tokens using CPI to token-2022 program
-        let cpi_accounts = Burn {
-            mint: ctx.accounts.mint.to_account_info(),
-            from: ctx.accounts.token_account.to_account_info(),
-            authority: ctx.accounts.owner.to_account_info(),
-        };
-        
-        let cpi_program = ctx.accounts.token_program.to_account_info();
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-        
-        token_burn(cpi_ctx, amount)?;
-        
-        msg!("Successfully burned {} tokens", amount);
         Ok(())
     }
 }
@@ -499,28 +456,6 @@ pub struct MintByOperator<'info> {
         bump
     )]
     pub mint_authority: AccountInfo<'info>,
-    
-    /// The Token-2022 program
-    pub token_program: Program<'info, Token2022>,
-}
-
-/// Burn tokens from user's token account
-/// Matches Solidity: burn(uint256 amount)
-#[derive(Accounts)]
-pub struct BurnTokens<'info> {
-    /// The mint account
-    #[account(mut)]
-    pub mint: InterfaceAccount<'info, Mint>,
-    
-    /// The token account to burn from
-    #[account(
-        mut,
-        constraint = token_account.owner == owner.key() @ PusdError::Unauthorized
-    )]
-    pub token_account: InterfaceAccount<'info, TokenAccount>,
-    
-    /// The owner of the token account
-    pub owner: Signer<'info>,
     
     /// The Token-2022 program
     pub token_program: Program<'info, Token2022>,
