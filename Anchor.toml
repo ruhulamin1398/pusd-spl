@@ -6,10 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-pusd_spl = "EHbVEaD6akGk7YvMzMD1MNgzF9sFXgASZPhKCUX71HdT"
-
-[registry]
-url = "https://api.apr.dev"
+pusd_spl = "9ftLECMyJfEk27kjxyrs3cPh8h6EtKET7gpj8v2RqN1e"
 
 [provider]
 cluster = "devnet"

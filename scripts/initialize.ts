@@ -4,8 +4,28 @@ import { PusdSpl } from "../target/types/pusd_spl";
 import { PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
 import * as fs from "fs";
 import * as path from "path";
+import { execSync } from "child_process";
 
 async function main() {
+  // Auto-detect Solana wallet and RPC URL if not set in environment
+  if (!process.env.ANCHOR_WALLET) {
+    try {
+      const keypairPath = execSync("solana config get | grep 'Keypair Path' | awk '{print $3}'", {
+        encoding: "utf-8",
+      }).trim();
+      process.env.ANCHOR_WALLET = keypairPath;
+      console.log("📁 Auto-detected wallet:", keypairPath);
+    } catch (error) {
+      console.error("❌ Could not detect Solana wallet. Please set ANCHOR_WALLET or run 'solana config set --keypair <path>'");
+      process.exit(1);
+    }
+  }
+
+  if (!process.env.ANCHOR_PROVIDER_URL) {
+    process.env.ANCHOR_PROVIDER_URL = "https://api.devnet.solana.com";
+    console.log("🌐 Using default RPC:", process.env.ANCHOR_PROVIDER_URL);
+  }
+
   // Configure the client
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);

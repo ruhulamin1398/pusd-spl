@@ -38,10 +38,10 @@ idl-fetch:; anchor idl fetch $(PROGRAM_ID) --provider.cluster devnet
 
 # scripts
 # =====================================================================
-# Program Initialization
-# Usage: make initialize OWNER=<pubkey> OPERATOR=<pubkey>
+# Program Initialization 
 # If not specified, uses default keypair for both roles
-initialize:; ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json ts-node scripts/initialize.ts $(OWNER) $(OPERATOR)
+# The script will auto-detect the current Solana wallet
+initialize:; ts-node scripts/initialize.ts $(OWNER_PUBKEY) $(OPERATOR_PUBKEY)
 
 generate-pda:; node scripts/generate-pda.js
 create-tokens:; bash scripts/create-token.sh
