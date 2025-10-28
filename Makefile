@@ -12,10 +12,14 @@ USER_PUBKEY=5nPDzEq3Gc3mBBDGh9jdpZuBNCowj6SoXsnz3vzZRUDD
 # New token with PDA mint authority
 
 token-authorize-mint:; spl-token authorize $(TOKEN_MINT) mint $(USER_PUBKEY)
+
+token-display:; spl-token display $(TOKEN_MINT)
+token-balance:; spl-token balance $(TOKEN_MINT)  --verbose
 token-account-info:; spl-token account-info $(TOKEN_MINT) --verbose
 token-account-create:; spl-token create-account $(TOKEN_MINT)
+token-account-all:; spl-token accounts --verbose
 token-accounts:; spl-token accounts $(TOKEN_MINT)
-token-display:; spl-token display $(TOKEN_MINT)
+token-burn:; spl-token burn  9N5PG1w59QFJGmEbMgFCxw5KnrQSC1jpdTEPq7HLna2g  12
 
 
 # anchor program 
