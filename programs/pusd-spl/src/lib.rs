@@ -100,6 +100,24 @@ pub mod pusd_spl {
         Ok(())
     }
 
+    /// View function: Check if a user has a specific role
+    /// Returns true if the user has the role, false otherwise
+    /// Matches Solidity: hasRole(bytes32 role, address account) returns (bool)
+    pub fn has_role(ctx: Context<HasRole>, _user: Pubkey, _role: Role) -> Result<bool> {
+        // If the account exists and matches the expected role, return true
+        // Note: In Anchor, if the account doesn't exist, the transaction will fail
+        // during account validation, so this function returning means the role exists
+        let has_role = ctx.accounts.user_role.role == _role;
+        
+        msg!("Checking role {:?} for user {}: {}", _role, _user, has_role);
+        
+        // Return the result
+        // Note: Anchor doesn't support direct return values in instructions
+        // The caller needs to check the user_role account data directly
+        // or use this for on-chain validation
+        Ok(has_role)
+    }
+
     /// Authorized Contract function: Mint tokens to a specified address
     /// Matches Solidity: mint(address to, uint256 amount)
     /// Can only be called by users with AuthorizedContract role
@@ -337,6 +355,19 @@ pub struct RemoveRole<'info> {
         mut,
         close = owner,
         seeds = [b"user_role", user_role.user.as_ref()],
+        bump = user_role.bump
+    )]
+    pub user_role: Account<'info, UserRole>,
+}
+
+#[derive(Accounts)]
+#[instruction(user: Pubkey, role: Role)]
+pub struct HasRole<'info> {
+    /// The user role account to check
+    /// If this account doesn't exist, the transaction will fail
+    /// which means the user doesn't have any role
+    #[account(
+        seeds = [b"user_role", user.as_ref()],
         bump = user_role.bump
     )]
     pub user_role: Account<'info, UserRole>,

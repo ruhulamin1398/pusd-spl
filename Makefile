@@ -41,26 +41,23 @@ idl-fetch:; anchor idl fetch $(PROGRAM_ID) --provider.cluster devnet
 # Program Initialization 
 # If not specified, uses default keypair for both roles
 # The script will auto-detect the current Solana wallet
-initialize:; ts-node scripts/initialize.ts $(OWNER_PUBKEY) $(OPERATOR_PUBKEY)
-
-generate-pda:; node scripts/generate-pda.js
 create-tokens:; bash scripts/create-token.sh
+
+initialize:; ts-node scripts/initialize.ts $(OWNER_PUBKEY) $(OPERATOR_PUBKEY)
+generate-pda:; node scripts/generate-pda.js
 mint-tokens:; ts-node scripts/mint-tokens.ts
+
 
 # Role Management
 add-admin:; ts-node scripts/manage-roles.ts add $(USER_PUBKEY) admin
 add-operator:; ts-node scripts/manage-roles.ts add $(USER_PUBKEY) operator
 add-contract:; ts-node scripts/manage-roles.ts add $(USER_PUBKEY) contract
-remove-role:; ts-node scripts/manage-roles.ts remove $(USER_PUBKEY)
-check-role:; ts-node scripts/manage-roles.ts check $(USER_PUBKEY)
+remove-role:; ts-node scripts/manage-roles.ts remove $(USER_PUBKEY) 
+
+has-role-owner:; ts-node scripts/hasrole.ts $(OWNER_PUBKEY) owner
+has-role-operator:; ts-node scripts/hasrole.ts $(OPERATOR_PUBKEY) operator   
 
 # Quick add for specific accounts
-add-operator-account1:; ts-node scripts/manage-roles.ts add $$(solana-keygen pubkey ~/.config/solana/wallets/account1.json) operator
-add-operator-account2:; ts-node scripts/manage-roles.ts add $$(solana-keygen pubkey ~/.config/solana/wallets/account2.json) operator
-add-operator-account3:; ts-node scripts/manage-roles.ts add $$(solana-keygen pubkey ~/.config/solana/wallets/account3.json) operator
-remove-operator-account1:; ts-node scripts/manage-roles.ts remove $$(solana-keygen pubkey ~/.config/solana/wallets/account1.json)
-remove-operator-account2:; ts-node scripts/manage-roles.ts remove $$(solana-keygen pubkey ~/.config/solana/wallets/account2.json)
-remove-operator-account3:; ts-node scripts/manage-roles.ts remove $$(solana-keygen pubkey ~/.config/solana/wallets/account3.json)
 
 
 # solana 
