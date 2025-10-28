@@ -15,6 +15,8 @@ pub enum PusdError {
     RecipientIsZeroAddress,
     #[msg("Role not active yet")]
     RoleNotActiveYet,
+    #[msg("Role not activated: Must wait 24 hours after assignment")]
+    RoleNotActivated,
     #[msg("Grant role failed")]
     GrantRoleFailed,
     #[msg("Only the program upgrade authority can initialize")]

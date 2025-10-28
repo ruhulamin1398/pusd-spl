@@ -1,12 +1,21 @@
-/// Macro to check if a user has a specific role (similar to Solidity modifiers)
+/// Macro to check if a user has a specific role and if it's activated (24h delay)
 /// Usage: require_role!(user_role_account, Role::Owner)?;
 #[macro_export]
 macro_rules! require_role {
-    ($user_role:expr, $required_role:expr) => {
+    ($user_role:expr, $required_role:expr) => {{
+        use anchor_lang::prelude::*;
+        
+        // Check if user has the required role
         if $user_role.role != $required_role {
             return Err(PusdError::Unauthorized.into());
         }
-    };
+        
+        // Check if role is activated (24 hours have passed since assignment)
+        let current_time = Clock::get()?.unix_timestamp;
+        if current_time < $user_role.role_active_time {
+            return Err(PusdError::RoleNotActivated.into());
+        }
+    }};
 }
 
 /// Macro to check if caller is upgrade authority

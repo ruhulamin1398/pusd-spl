@@ -31,7 +31,21 @@ deploy:; anchor deploy
 deploy-devnet:; anchor deploy --provider.cluster devnet
 deploy-mainnet:; anchor deploy --provider.cluster mainnet
 program-show:; solana program show $(PROGRAM_ID) --url devnet
-program-upgrade:; anchor upgrade target/deploy/pusd_spl.so --program-id $(PROGRAM_ID) --provider.cluster devnet
+
+# Program upgrade with automatic buffer management
+# Creates a new buffer and deploys from it to handle size increases
+program-upgrade:
+	@echo "Building program..."
+	@anchor build
+	@echo "Creating buffer for program upgrade..."
+	@BUFFER=$$(solana program write-buffer target/deploy/pusd_spl.so --url devnet | grep "Buffer:" | awk '{print $$2}'); \
+	echo "Buffer created: $$BUFFER"; \
+	echo "Deploying from buffer..."; \
+	solana program deploy --buffer $$BUFFER --program-id $(PROGRAM_ID) --url devnet
+	@echo "Program upgrade successful!"
+
+# Legacy upgrade command (may fail if program size increases)
+program-upgrade-legacy:; anchor upgrade target/deploy/pusd_spl.so --program-id $(PROGRAM_ID) --provider.cluster devnet
 
 # IDL Management
 idl-close:; anchor idl close $(PROGRAM_ID) --provider.cluster devnet
@@ -59,7 +73,7 @@ assign-role-operator:; ts-node scripts/assignrole.ts $(OPERATOR_PUBKEY) operator
 remove-role-operator:; ts-node scripts/removerole.ts $(OPERATOR_PUBKEY)
 
 has-role-owner:; ts-node scripts/hasrole.ts $(OWNER_PUBKEY) owner
-has-role-operator:; ts-node scripts/hasrole.ts $(OPERATOR_PUBKEY) operator   
+has-role-operator:; ts-node scripts/hasrole.ts $(OPERATOR_PUBKEY) operator
 
 # Quick add for specific accounts
 

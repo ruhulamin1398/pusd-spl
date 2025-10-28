@@ -45,19 +45,21 @@ pub mod pusd_spl {
         
         msg!("Initializing program with owner: {:?} and operator: {:?}", owner_address, operator_address);
         
-        // Set up the owner role account
-        let owner_role = &mut ctx.accounts.owner_role;
-        owner_role.user = owner_address;
-        owner_role.role = Role::Owner;
-        owner_role.bump = ctx.bumps.owner_role;
-        owner_role.role_active_time = Clock::get()?.unix_timestamp;
+        // Grant owner role (immediate activation during initialization)
+        _grant_role(
+            &mut ctx.accounts.owner_role,
+            owner_address,
+            Role::Owner,
+            ctx.bumps.owner_role,
+        )?;
         
-        // Set up the operator role account
-        let operator_role = &mut ctx.accounts.operator_role;
-        operator_role.user = operator_address;
-        operator_role.role = Role::Operator;
-        operator_role.bump = ctx.bumps.operator_role;
-        operator_role.role_active_time = Clock::get()?.unix_timestamp;
+        // Grant operator role (immediate activation during initialization)
+        _grant_role(
+            &mut ctx.accounts.operator_role,
+            operator_address,
+            Role::Operator,
+            ctx.bumps.operator_role,
+        )?;
         
         // Set program state as initialized
         program_state.is_initialized = true;
@@ -106,6 +108,8 @@ pub mod pusd_spl {
     }
     /// Administrative function to assign or update a user's role
     /// Only the Owner can execute this function
+    /// Role will be activated after 24 hours
+    /// Note: User must not have any existing role. Remove existing role first.
     pub fn add_role(ctx: Context<AddRole>, user: Pubkey, role: Role) -> Result<()> {
         // Verify the caller has Owner role
         require_role!(ctx.accounts.owner_role, Role::Owner);
@@ -113,15 +117,24 @@ pub mod pusd_spl {
         // Validate the user address
         require_valid_address!(user);
         
+        // Check if user already has a role assigned
+        // If the account already exists and has data, it means the user has a role
+        if ctx.accounts.user_role.user != Pubkey::default() {
+            msg!("User {} already has role {:?}. Remove existing role first.", user, ctx.accounts.user_role.role);
+            return Err(PusdError::RoleAlreadyAssigned.into());
+        }
+        
         msg!("Adding role {:?} to user: {}", role, user);
         
-        let user_role = &mut ctx.accounts.user_role;
-        user_role.user = user;
-        user_role.role = role;
-        user_role.bump = ctx.bumps.user_role;
-        user_role.role_active_time = Clock::get()?.unix_timestamp;
+        // Grant role with 24-hour activation delay
+        _grant_role(
+            &mut ctx.accounts.user_role,
+            user,
+            role,
+            ctx.bumps.user_role,
+        )?;
         
-        msg!("Role added successfully");
+        msg!("Role added successfully. Will be activated in 24 hours");
         Ok(())
     }
 
@@ -129,7 +142,13 @@ pub mod pusd_spl {
     /// Only the Owner can execute this function
     /// The role account will be closed and rent refunded to the owner
     pub fn remove_role(ctx: Context<RemoveRole>) -> Result<()> {
-        msg!("Removing role for user: {}", ctx.accounts.user_role.user);
+        // Verify the caller has Owner role
+        require_role!(ctx.accounts.owner_role, Role::Owner);
+        
+        msg!("Removing role {:?} for user: {}", ctx.accounts.user_role.role, ctx.accounts.user_role.user);
+        
+        // The account will be closed automatically by Anchor's close constraint
+        // Rent will be refunded to the owner
         Ok(())
     }
 
@@ -236,6 +255,33 @@ fn _mint<'info>(
     );
     
     mint_to(cpi_ctx, amount)?;
+    
+    Ok(())
+}
+
+/// Private helper function to grant a role to a user
+/// This internal function handles the role assignment logic
+/// 
+/// Parameters:
+/// - user_role: The UserRole account to populate
+/// - user: The public key of the user receiving the role
+/// - role: The role being granted (Owner, Operator, or AuthorizedContract)
+/// - bump: The PDA bump seed 
+fn _grant_role(
+    user_role: &mut UserRole,
+    user: Pubkey,
+    role: Role,
+    bump: u8,
+) -> Result<()> {
+    user_role.user = user;
+    user_role.role = role;
+    user_role.bump = bump;
+    
+    // Set activation time to current time + 24 hours
+    let current_time = Clock::get()?.unix_timestamp;
+    user_role.role_active_time = current_time + ROLE_ACTIVATION_DELAY;
+    
+    msg!("Role {:?} granted to {} - activates at {}", role, user, user_role.role_active_time);
     
     Ok(())
 }
