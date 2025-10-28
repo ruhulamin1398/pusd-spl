@@ -43,7 +43,7 @@ async function main() {
 
   // Recipient token account address
   // This is the token account where tokens will be minted
-  const recipientTokenAccount = new PublicKey("EKmXK17A6JNDzdHw22NRbJK49x3DYieuAAmX2tVhn5qJ");
+  const recipientTokenAccount = new PublicKey("DEht81K4NN6iseyzfYxYD2oEsSbHRL2ZjX121iVCXkPQ");
 
   // Derive the mint authority PDA
   const [mintAuthorityPDA] = PublicKey.findProgramAddressSync(

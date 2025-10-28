@@ -1,0 +1,13 @@
+{
+  "name": "PUSD SPL Token Program",
+  "description": "PUSD Stablecoin implementation using Solana SPL Token-2022 standard with PDA-controlled mint authority",
+  "logo": "https://raw.githubusercontent.com/ruhulamin1398/pusd-spl/master/logo.png",
+  "website": "https://github.com/ruhulamin1398/pusd-spl",
+  "twitter": "@YourTwitterHandle",
+  "discord": "https://discord.gg/your-server",
+  "telegram": "https://t.me/your-channel",
+  "version": "0.1.0",
+  "programId": "9ftLECMyJfEk27kjxyrs3cPh8h6EtKET7gpj8v2RqN1e",
+  "category": "DeFi",
+  "tags": ["stablecoin", "spl-token", "token-2022", "defi"]
+}

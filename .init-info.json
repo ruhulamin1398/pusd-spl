@@ -1,0 +1,14 @@
+{
+  "programId": "9ftLECMyJfEk27kjxyrs3cPh8h6EtKET7gpj8v2RqN1e",
+  "programStatePDA": "2P4ZDmC5YwhuqZE3cVLNL9uY7GCF5zsWBa5TPi1Txs9U",
+  "owner": {
+    "address": "AyB64MyXyUsHFaauWspTE1hxN3VPwd7ofDas8D1QFJsR",
+    "rolePDA": "8nmB1URi6Wn1PxXp7HatBZxrdGnfwXNBVeyS7pq8Af3z"
+  },
+  "operator": {
+    "address": "4nCCoHpuaKc4vgYbp3gAiai2qDKLXmXvhsWacq191wJg",
+    "rolePDA": "FiYEjihXNuEEq8JCo3zzPnZME5wBkrsWX7WWXw2ysLeu"
+  },
+  "transactionSignature": "vBfLy5zhsg75EA5jY5tt4H3Q4pQu2gGjkDSj6njBoK6syyb9H7gQg6EgKBvP1LWxzjzwE7mjcb5iWdTMLYS9ccy",
+  "timestamp": "2025-10-28T09:13:13.100Z"
+}
