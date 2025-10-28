@@ -48,11 +48,10 @@ generate-pda:; node scripts/generate-pda.js
 mint-tokens:; ts-node scripts/mint-tokens.ts
 
 
-# Role Management
-add-admin:; ts-node scripts/manage-roles.ts add $(USER_PUBKEY) admin
-add-operator:; ts-node scripts/manage-roles.ts add $(USER_PUBKEY) operator
-add-contract:; ts-node scripts/manage-roles.ts add $(USER_PUBKEY) contract
-remove-role:; ts-node scripts/manage-roles.ts remove $(USER_PUBKEY) 
+# Role Management 
+
+assign-role-operator:; ts-node scripts/assignrole.ts $(OPERATOR_PUBKEY) operator 
+remove-role-operator:; ts-node scripts/removerole.ts $(OPERATOR_PUBKEY)
 
 has-role-owner:; ts-node scripts/hasrole.ts $(OWNER_PUBKEY) owner
 has-role-operator:; ts-node scripts/hasrole.ts $(OPERATOR_PUBKEY) operator   
